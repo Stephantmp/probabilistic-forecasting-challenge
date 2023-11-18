@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from functions import get_DAX
+from datetime import datetime, date
 
 def DAX_baseline(hist=pd.DataFrame()):
 
@@ -17,8 +18,9 @@ def DAX_baseline(hist=pd.DataFrame()):
 
         pred_baseline[i, :] = np.quantile(hist[ret_str].iloc[-last_t:], q=tau)
 
-
+    date_str = date.today()  # .strftime('%Y%m%d')
     df_sub = pd.DataFrame({
+        "forecast_date": date_str,
         "target": "DAX",
         "horizon": [str(i) + " day" for i in (1, 2, 5, 6, 7)],
         "q0.025": pred_baseline[:, 0],
