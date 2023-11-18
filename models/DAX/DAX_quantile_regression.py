@@ -38,7 +38,7 @@ def DAX_quantile_regression(hist=None):
         "q0.975": pred_quantile_regression[:, 4]
     })
 
-    print("Final Predictions:")
-    print(df_sub)
+    #print("Final Predictions:")
+    #print(df_sub)
 
     return df_sub

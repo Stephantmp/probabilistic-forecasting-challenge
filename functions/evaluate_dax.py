@@ -38,7 +38,6 @@ def evaluate_daxmodel(model1, model2, df, last_x=100, years=False, months=False,
 def evaluate_and_append(evaluation_df, pred, df):
     obs = pd.DataFrame(columns=['ret1'])
     for index, row in pred.iterrows():
-        print(row)
         if index in df.index:
             obs.loc[index] = df.loc[index]['ret1']
 
