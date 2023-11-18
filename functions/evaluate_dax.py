@@ -2,7 +2,7 @@ import pandas as pd
 
 from functions.prepare_data import split_time
 from functions.evaluation import evaluate_horizon
-
+from tqdm import tqdm
 
 def evaluate_daxmodel(model1, model2, df, last_x=100, years=False, months=False, weeks=False):
     '''
@@ -20,7 +20,7 @@ def evaluate_daxmodel(model1, model2, df, last_x=100, years=False, months=False,
     evaluation_model1 = pd.DataFrame()
     evaluation_model2 = pd.DataFrame()
 
-    for w in range(2, last_x):
+    for w in tqdm(range(2, last_x), desc="Evaluating models"):
         df_before, df_after = split_time(
             df_before, num_years=years, num_months=months, num_weeks=weeks)
 
@@ -36,15 +36,16 @@ def evaluate_daxmodel(model1, model2, df, last_x=100, years=False, months=False,
 
 
 def evaluate_and_append(evaluation_df, pred, df):
-    obs = pd.DataFrame(columns=['LogRetLag1'])
+    obs = pd.DataFrame(columns=['ret1'])
     for index, row in pred.iterrows():
+        print(row)
         if index in df.index:
-            obs.loc[index] = df.loc[index]['LogRetLag1']
+            obs.loc[index] = df.loc[index]['ret1']
 
     merged_df = pd.merge(pred, obs, left_index=True, right_index=True)
     for index, row in merged_df.iterrows():
         quantile_preds = row[['q0.025', 'q0.25', 'q0.5', 'q0.75', 'q0.975']]
-        observation = row['LogRetLag1']
+        observation = row['ret1']
         score = evaluate_horizon(quantile_preds, observation)
         merged_df.at[index, 'score'] = score
 
