@@ -19,9 +19,6 @@ horizons = [h + 1 for h in horizons_def]
 def get_date_from_horizon(last_ts, horizon):
     return last_ts + pd.DateOffset(hours=horizon)
 
-# Determining the last date for prediction
-LAST_IDX = -1
-LAST_DATE = df.iloc[LAST_IDX].name
 
 # Adjusting the last date to the nearest Thursday
 current_date = datetime.now()
@@ -68,7 +65,7 @@ quantile_models = {quantile: sm.QuantReg(y, X).fit(q=quantile) for quantile in t
 print(quantile_models[0.5].summary())
 
 # Create a new DataFrame for the forecast
-forecast_df = pd.DataFrame({'date_time': horizon_dates})
+forecast_df = pd.DataFrame({'date_time': horizon_date})
 # Extract and one-hot encode month and hour from the date_time
 forecast_df['month'] = forecast_df['date_time'].dt.month
 forecast_df['hour'] = forecast_df['date_time'].dt.hour
@@ -90,7 +87,10 @@ for col in X.columns:
 # Reorder columns to match X (excluding date_time)
 forecast_columns = [col for col in X.columns if col != 'date_time']
 forecast_df = forecast_df[['date_time'] + forecast_columns]
-
+forecast_df.drop(['date_time'], axis=1, inplace=True)
+print(forecast_df.head())
+print(forecast_df.shape())
+print(X.shape())
 # Make predictions for each quantile
 for quantile, model in quantile_models.items():
     forecast_df[f'prediction_q{quantile}'] = model.predict(forecast_df)
@@ -99,5 +99,5 @@ for quantile, model in quantile_models.items():
 df_sub = pd.DataFrame()
 for quantile in tau:
     df_sub[f'q{quantile}'] = forecast_df[f'prediction_q{quantile}']
-
+print(df_sub)
 # Additional steps for visualization or output formatting can be added here
