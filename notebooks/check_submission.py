@@ -173,6 +173,6 @@ def check_df(df):
 
     print("---------------------------")
     print("Looks good!")
-df=pd.read_csv("../../forecasts/20231115_JonSnow.csv")
-check_df(df)
 
+
+check_df(pd.read_csv("../forecasts/20231122_JonSnow.csv"))

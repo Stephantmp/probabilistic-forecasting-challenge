@@ -2,6 +2,8 @@
 import pandas as pd
 from datetime import datetime, timedelta
 from functions import get_energy
+
+#energy regression finalized on November 22nd
 def energy_quantile_regression(df):
     # Fetching and initial preprocessing of the dataset
     df

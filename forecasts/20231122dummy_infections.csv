@@ -1,0 +1,6 @@
+forecast_date,target,horizon,q0.025,q0.25,q0.5,q0.75,q0.975
+2023-11-22,infections,0 week,NA,NA,NA,NA,NA
+2023-11-22,infections,1 week,NA,NA,NA,NA,NA
+2023-11-22,infections,2 week,NA,NA,NA,NA,NA
+2023-11-22,infections,3 week,NA,NA,NA,NA,NA
+2023-11-22,infections,4 week,NA,NA,NA,NA,NA
