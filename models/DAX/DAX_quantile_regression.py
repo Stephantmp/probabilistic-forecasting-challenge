@@ -3,9 +3,9 @@ import numpy as np
 import statsmodels.formula.api as smf
 from statsmodels.tools import add_constant
 from functions import get_DAX
-from datetime import date
+from datetime import date, timedelta,datetime
 
-def DAX_quantile_regression(hist=None):
+def DAX_quantile_regression(hist=None,date_str=None):
     if hist is None:
         hist = get_DAX.get()
 
@@ -26,7 +26,9 @@ def DAX_quantile_regression(hist=None):
 
             pred_quantile_regression[i, j] = res.predict(X.iloc[-1:]).iloc[0]
 
-    date_str = date.today()
+    if date_str==None:
+        date_str = date.today()
+
     df_sub = pd.DataFrame({
         "forecast_date": date_str,
         "target": "DAX",

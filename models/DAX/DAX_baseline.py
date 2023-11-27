@@ -2,16 +2,15 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 from functions import get_DAX
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 
 import pandas as pd
 import numpy as np
 from datetime import date
 
-def DAX_baseline(hist=None):
+def DAX_baseline(hist=None,date_str=None):
     if hist is None:
-        # Load data only if not provided - replace with actual data loading function if necessary
-        hist = pd.DataFrame()  # Placeholder for data loading
+        hist = get_DAX.get()
 
     tau = [.025, .25, .5, .75, .975]
 
@@ -25,8 +24,8 @@ def DAX_baseline(hist=None):
 
         pred_baseline[i, :] = np.quantile(hist[ret_str].iloc[-last_t:], q=tau)
 
-
-    date_str = date.today()
+    if date_str==None:
+        date_str = date.today()
     df_sub = pd.DataFrame({
         "forecast_date": date_str,
         "target": "DAX",
