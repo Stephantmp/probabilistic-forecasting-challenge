@@ -17,7 +17,7 @@ def merge(df_energy, df_dax):
     df_sub=pd.concat([df_dax, df_energy, df_infections])
     print(df_sub)
     #need to change this
-    PATH = "../forecasts"
+    PATH = "../../forecasts"
     date_str = datetime.today().strftime('%Y%m%d')
     df_sub.to_csv(PATH + "/" + date_str + "_JonSnow.csv", index=False)
     #%%

@@ -1,13 +1,13 @@
 
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from functions import get_energy
-
-#energy regression finalized on November 22nd
-def energy_quantile_regression(df):
+def energy_quantile_regression(df,date_str=None):
     # Fetching and initial preprocessing of the dataset
-    df
-
+    if df is None:
+        df = get_energy.get()
+    if date_str==None:
+        date_str = date.today()
     # Define the lead times
     horizons_def = [36, 40, 44, 60, 64, 68]
     horizons = [h + 1 for h in horizons_def]
@@ -17,17 +17,8 @@ def energy_quantile_regression(df):
         return last_ts + pd.DateOffset(hours=horizon)
 
 
-    # Adjusting the last date to the nearest Thursday
-    current_date = datetime.now()
-    days_until_thursday = 3 - current_date.weekday()
-    if days_until_thursday < 0:
-        days_until_thursday += 7
-    thursday_of_current_week = current_date + timedelta(days=days_until_thursday)
-    thursday_of_current_week = thursday_of_current_week.replace(hour=0, minute=0, second=0, microsecond=0)
-    LAST_DATE = thursday_of_current_week
-
     # Generating horizon dates
-    horizon_date = [get_date_from_horizon(LAST_DATE, h) for h in horizons]
+    horizon_date = [get_date_from_horizon(date_str, h) for h in horizons]
 
     # Define the quantiles for prediction
     tau = [0.025, 0.25, 0.5, 0.75, 0.975]

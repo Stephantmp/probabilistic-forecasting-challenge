@@ -2,7 +2,7 @@ import sys
 import pandas as pd
 import numpy as np
 import warnings
-from datetime import datetime, date
+from datetime import datetime
 
 def check_df(df):
     EXPECTED_COLS = ["forecast_date", "target", "horizon", "q0.025", "q0.25",
@@ -173,5 +173,3 @@ def check_df(df):
 
     print("---------------------------")
     print("Looks good!")
-
-

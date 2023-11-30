@@ -54,6 +54,9 @@ def evaluate(model1, model2, df, start_date, end_date, last_x=5, years=False, mo
     plt.ylabel('Score')
     plt.xticks(rotation=45)  # Optional: Rotate x-axis labels for better readability
     plt.show()
+    # Aggregating scores by model and horizon
+    grouped_scores = combined_evaluation.groupby(['model', 'horizon'])['score'].agg(['mean', 'median', 'std'])
+    grouped_scores
     return evaluation_model1, evaluation_model2
 
 

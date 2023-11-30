@@ -29,7 +29,7 @@ def ensemble(df_model1, df_model2, weight1, weight2):
     for col in df_model1.columns:
         if col not in quantile_columns:
             ensemble[col] = df_model1[col]
-
+    ensemble=ensemble[df_model1.columns]
     return ensemble
 
 # Example usage
