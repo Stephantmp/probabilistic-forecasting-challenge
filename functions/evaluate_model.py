@@ -34,30 +34,32 @@ def evaluate(model1, model2, df, start_date, end_date, horizon_format='days', la
         # Update df_before for the next iteration
         df_before, _ = split_time(df_before, num_years=years, num_months=months, num_weeks=weeks)
 
-        # Concatenate the two models' evaluations if needed
-        evaluation_model1['model'] = 'Baseline Model'
-        evaluation_model2['model'] = 'Quantile Regression'
-        combined_evaluation = pd.concat([evaluation_model1, evaluation_model2])
+    # Concatenate the two models' evaluations
+    evaluation_model1['model'] = 'Baseline Model'
+    evaluation_model2['model'] = 'Quantile Regression'
+    combined_evaluation = pd.concat([evaluation_model1, evaluation_model2])
 
-        # Convert 'actual_forecast_date' to datetime if it's not already
-        combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
-        combined_evaluation = combined_evaluation.sort_values(by='actual_forecast_date')
-        combined_evaluation.dropna(subset=['score'], inplace=True)
-        combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
-        combined_evaluation['score'] = combined_evaluation['score'].astype(float)
+    # Prepare data for plotting
+    combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
+    combined_evaluation = combined_evaluation.sort_values(by='actual_forecast_date')
+    combined_evaluation.dropna(subset=['score'], inplace=True)
+    combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
+    combined_evaluation['score'] = combined_evaluation['score'].astype(float)
 
-        plt.figure(figsize=(12, 6))
-        sns.lineplot(data=combined_evaluation, x='actual_forecast_date', y='score', hue='model')
-        plt.title('Model Score Over Time')
-        plt.xlabel('Date')
-        plt.ylabel('Score')
-        plt.xticks(rotation=45)  # Optional: Rotate x-axis labels for better readability
-        plt.show()
-        # Aggregating scores by model and horizon
-        grouped_scores = combined_evaluation.groupby(['model', 'horizon'])['score'].agg(['mean', 'median', 'std'])
-        grouped_scores
+    # Plotting
+    plt.figure(figsize=(12, 6))
+    sns.lineplot(data=combined_evaluation, x='actual_forecast_date', y='score', hue='model')
+    plt.title('Model Score Over Time')
+    plt.xlabel('Date')
+    plt.ylabel('Score')
+    plt.xticks(rotation=45)  # Optional: Rotate x-axis labels for better readability
+    plt.show()
 
-    return evaluation_model1, evaluation_model2
+    # Aggregating scores by model and horizon
+    grouped_scores = combined_evaluation.groupby(['model', 'horizon'])['score'].agg(['mean', 'median', 'std'])
+
+    return evaluation_model1, evaluation_model2, grouped_scores
+
 
 def evaluate_and_append(evaluation_df, pred, df, horizon_format):
     '''
@@ -85,18 +87,29 @@ def evaluate_and_append(evaluation_df, pred, df, horizon_format):
     # Apply the function to calculate the actual forecast date
     pred['actual_forecast_date'] = pred.apply(calculate_actual_forecast_date, axis=1)
 
+
     # Convert the timezone of actual_forecast_date to match that of df
     pred['actual_forecast_date'] = pred['actual_forecast_date'].dt.tz_localize('Europe/Berlin')
+
+
+    # Convert index to datetime if it's not already
+    df.index = pd.to_datetime(df.index)
+
+    # Convert timezone only if the index is already timezone-aware
+    if df.index.tz is not None:
+        df.index = df.index.tz_convert('Europe/Berlin')
+    else:
+        df.index = df.index.tz_localize('Europe/Berlin', ambiguous='NaT', nonexistent='shift_forward')
+
 
     # Merge predictions with actual data based on the actual forecast date
     merged_df = pd.merge(pred, df, left_on='actual_forecast_date', right_index=True, how='left')
 
-    # Debug: Check merged DataFrame
-    print("Merged DataFrame in evaluate_and_append:\n", merged_df)
+
 
     for index, row in merged_df.iterrows():
         quantile_preds = row[['q0.025', 'q0.25', 'q0.5', 'q0.75', 'q0.975']]
-        observation = row['ret1']
+        observation = row['gesamt']
         score = evaluate_horizon(quantile_preds, observation)
         merged_df.at[index, 'score'] = score
 

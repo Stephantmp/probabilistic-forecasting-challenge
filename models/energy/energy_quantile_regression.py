@@ -1,19 +1,24 @@
 
 import pandas as pd
-from datetime import datetime, timedelta, date
+from datetime import date, datetime
 from functions import get_energy
 def energy_quantile_regression(df,date_str=None):
     # Fetching and initial preprocessing of the dataset
     if df is None:
         df = get_energy.get()
     if date_str==None:
-        date_str = date.today()
+        date_str = datetime.date.today()
     # Define the lead times
     horizons_def = [36, 40, 44, 60, 64, 68]
     horizons = [h + 1 for h in horizons_def]
 
     # Function to calculate future dates based on a horizon
     def get_date_from_horizon(last_ts, horizon):
+        if isinstance(last_ts, str):
+            # Convert string to datetime
+            last_ts = pd.to_datetime(last_ts)
+
+        # Add DateOffset
         return last_ts + pd.DateOffset(hours=horizon)
 
 
@@ -99,13 +104,9 @@ def energy_quantile_regression(df,date_str=None):
         df_sub[f'q{quantile}'] = forecast_df[f'prediction_q{quantile}']
     print(df_sub)
     '''
-    #%%
-    forecast_df2
-    #%%
-    from datetime import date
-    date_str = date.today()  #- timedelta(days=1)
-    date_str = date_str
-    date_str
+
+    if date_str == None:
+        date_str = date.today()
     df_sub = pd.DataFrame({
         "forecast_date": date_str,
         "target": "energy",

@@ -14,7 +14,13 @@ def energy_baseline(df, date_str=None):
 
     # Function to calculate future dates based on a horizon
     def get_date_from_horizon(last_ts, horizon):
+        if isinstance(last_ts, str):
+            # Convert string to datetime
+            last_ts = pd.to_datetime(last_ts)
+
+        # Add DateOffset
         return last_ts + pd.DateOffset(hours=horizon)
+
     # Generating horizon dates
     horizon_date = [get_date_from_horizon(date_str , h) for h in horizons]
     # rows correspond to horizon, columns to quantile level
@@ -47,12 +53,8 @@ def energy_baseline(df, date_str=None):
 
         pred_baseline[i, :] = np.quantile(df_tmp[cond].iloc[-last_t:]["gesamt"], q=tau)
 
-
-    date_str = datetime.today().strftime('%Y%m%d')
-    # %%
-    date_str = date.today()  # - timedelta(days=1)
-    date_str = date_str
-    date_str
+    if date_str==None:
+        date_str = date.today()
     # %%
     df_sub = pd.DataFrame({
         "forecast_date": date_str,
