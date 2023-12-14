@@ -1,13 +1,13 @@
-
 import pandas as pd
 from datetime import date, datetime
 from functions import get_energy
-def energy_quantile_regression(df,date_str=None):
+def energy_quantile_regression_temp(df, temperature_forecast, date_str=None):
     # Fetching and initial preprocessing of the dataset
     if df is None:
         df = get_energy.get()
-    if date_str==None:
-        date_str = date.today()
+    if date_str is None:
+        date_str = pd.to_datetime('today').normalize()
+
     # Define the lead times
     horizons_def = [36, 40, 44, 60, 64, 68]
     horizons = [h + 1 for h in horizons_def]
@@ -17,10 +17,7 @@ def energy_quantile_regression(df,date_str=None):
         if isinstance(last_ts, str):
             # Convert string to datetime
             last_ts = pd.to_datetime(last_ts)
-
-        # Add DateOffset
         return last_ts + pd.DateOffset(hours=horizon)
-
 
     # Generating horizon dates
     horizon_date = [get_date_from_horizon(date_str, h) for h in horizons]
@@ -57,11 +54,15 @@ def energy_quantile_regression(df,date_str=None):
     # Print summary of one of the quantile models (e.g., median model)
     print(quantile_models[0.5].summary())
 
-    # Additional steps for visualization or output formatting can be added here
-    #%%
-    # Create a new DataFrame for the forecast
-    forecast_df = pd.DataFrame()
+    # Creating the forecast DataFrame
     forecast_df = pd.DataFrame({'date_time': horizon_date})
+
+    # Check if temperature forecast is provided and has correct length
+    if temperature_forecast is not None and len(temperature_forecast) == len(horizon_date):
+        forecast_df['temperature_2m'] = temperature_forecast
+    else:
+        raise ValueError("Temperature forecast is not provided or does not match the length of the forecast dates.")
+
     # Extract and one-hot encode month and hour from the date_time
     forecast_df['month'] = forecast_df['date_time'].dt.month
     forecast_df['hour'] = forecast_df['date_time'].dt.hour
@@ -84,29 +85,14 @@ def energy_quantile_regression(df,date_str=None):
     forecast_columns = [col for col in X.columns if col != 'date_time']
     forecast_df = forecast_df[['date_time'] + forecast_columns]
     forecast_df.drop(['date_time'], axis=1, inplace=True)
-    forecast_df.head()
-    #%%
-    quantile_models
-    #%%
-    forecast_df2 = forecast_df.copy()
-    #%%
-    print(forecast_df)
 
     # Make predictions for each quantile
+    forecast_df2 = forecast_df.copy()
     for quantile, model in quantile_models.items():
         forecast_var = model.predict(forecast_df)
         forecast_df2[f'prediction_q{quantile}'] = forecast_var
-    print(forecast_df2)
-    '''
-    # Formatting the output
-    df_sub = pd.DataFrame()
-    for quantile in tau:
-        df_sub[f'q{quantile}'] = forecast_df[f'prediction_q{quantile}']
-    print(df_sub)
-    '''
 
-    if date_str == None:
-        date_str = date.today()
+    # Formatting the output
     df_sub = pd.DataFrame({
         "forecast_date": date_str,
         "target": "energy",
@@ -115,6 +101,7 @@ def energy_quantile_regression(df,date_str=None):
         "q0.25": forecast_df2["prediction_q0.25"],
         "q0.5": forecast_df2["prediction_q0.5"],
         "q0.75": forecast_df2["prediction_q0.75"],
-        "q0.975": forecast_df2["prediction_q0.975"]})
-    return df_sub
+        "q0.975": forecast_df2["prediction_q0.975"]
+    })
 
+    return df_sub
