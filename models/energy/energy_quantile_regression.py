@@ -7,7 +7,7 @@ def energy_quantile_regression(df,date_str=None):
     if df is None:
         df = get_energy.get()
     if date_str==None:
-        date_str = datetime.date.today()
+        date_str = date.today()
     # Define the lead times
     horizons_def = [36, 40, 44, 60, 64, 68]
     horizons = [h + 1 for h in horizons_def]
