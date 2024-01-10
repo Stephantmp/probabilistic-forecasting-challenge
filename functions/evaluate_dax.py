@@ -1,35 +1,35 @@
 
 import pandas as pd
+import pytz
 
 from functions.prepare_data import split_time
 from functions.evaluation import evaluate_horizon
 def evaluate(model1, model2, df, start_date, end_date, last_x=5, years=False, months=False, weeks=True):
     '''
     Evaluate DAX models over a specified range of dates.
-    Parameters:
-    - model1, model2: Models to evaluate.
-    - df: DataFrame containing the DAX data.
-    - start_date, end_date: Start and end dates of the evaluation period.
-    - last_x, years, months, weeks: Parameters to control the time split.
     '''
     date_range = pd.date_range(start=start_date, end=end_date)
     evaluation_model1 = pd.DataFrame()
     evaluation_model2 = pd.DataFrame()
 
     for current_date in date_range:
-        df_before = df.copy()
-        date_str = current_date.strftime('%Y-%m-%d')
+        # Adjust current_date timezone if necessary
+        if df.index.tz is not None:
+            current_date = current_date.tz_localize(df.index.tz)
+
+        # Data for model input: up to current_date
+        df_model_input = df[df.index < current_date]
 
         # Evaluate model1
-        pred_model1 = model1['function'](df_before, date_str=date_str)
+        pred_model1 = model1['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
         evaluation_model1 = evaluate_and_append(evaluation_model1, pred_model1, df)
 
         # Evaluate model2
-        pred_model2 = model2['function'](df_before, date_str=date_str)
+        pred_model2 = model2['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
         evaluation_model2 = evaluate_and_append(evaluation_model2, pred_model2, df)
 
-        # Update df_before for the next iteration
-        df_before, _ = split_time(df_before, num_years=years, num_months=months, num_weeks=weeks)
+
+
     import seaborn as sns
     import matplotlib.pyplot as plt
 
