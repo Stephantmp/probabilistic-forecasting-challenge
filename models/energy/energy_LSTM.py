@@ -93,7 +93,7 @@ def energy_forecast(input_data, date_str=None):
         e = y_true - y_pred
         losses = []
         for q in quantiles:
-            loss = K.maximum(q * e, (q - 1) * e)
+            loss = K.maximum(2*q * e, 2*(q - 1) * e)
             losses.append(K.mean(loss, axis=-1))
         return K.mean(K.stack(losses, axis=-1), axis=-1)
 
