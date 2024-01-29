@@ -31,7 +31,7 @@ import tensorflow.keras.backend as K
 from functions import get_energy
 
 
-def energy_forecast(input_data, date_str=None):
+def LSTM(input_data, date_str=None):
     # Load default energy data if none provided
     if input_data is None:
         energydata = get_energy.get()

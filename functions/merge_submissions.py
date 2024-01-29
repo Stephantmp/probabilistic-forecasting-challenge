@@ -1,7 +1,7 @@
 from datetime import datetime, date
 import pandas as pd
 def merge(df_energy, df_dax):
-    date_str = date.today() #.strftime('%Y%m%d')
+    date_str = date.today()#.strftime('%Y%m%d')
     #%%
     df_infections = pd.DataFrame({
         "forecast_date": date_str,
@@ -15,6 +15,7 @@ def merge(df_energy, df_dax):
     })
 
     df_sub=pd.concat([df_dax, df_energy, df_infections])
+    df_sub['forecast_date'] = pd.to_datetime(df_sub['forecast_date'], format='%Y-%m-%d')
     print(df_sub)
     #need to change this
     PATH = "../../forecasts"

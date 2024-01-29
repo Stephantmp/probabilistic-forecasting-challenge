@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from datetime import datetime, timedelta
 from functions import get_energy
 
-def energy_forecast(input_data=None, date_str=None):
+def energy_XGBoost(input_data=None, date_str=None):
     # Helper function to extract features for a given timestamp
     def extract_features_for_timestamp(timestamp, df):
         return [timestamp.hour, timestamp.day, timestamp.month, timestamp.weekday()]
@@ -57,7 +57,9 @@ def energy_forecast(input_data=None, date_str=None):
     # Generate predictions for future timestamps
     horizons = [36, 40, 44, 60, 64, 68]
     base_date = datetime.strptime(date_str, '%Y-%m-%d')
-    future_timestamps = [base_date + timedelta(hours=h) for h in horizons]
+    #add 24 hrs to base date
+    base_date_plus_1=base_date+timedelta(days=1)
+    future_timestamps = [base_date_plus_1 + timedelta(hours=h) for h in horizons]
     prediction_inputs = [extract_features_for_timestamp(ts, df) for ts in future_timestamps]
     prediction_inputs_scaled = scaler_X.transform(prediction_inputs)
 
