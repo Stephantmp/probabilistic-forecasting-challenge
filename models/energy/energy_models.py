@@ -1,6 +1,4 @@
 from datetime import datetime, date, timedelta
-import pandas as pd
-import numpy as np
 import numpy as np
 import pandas as pd
 from keras.models import Sequential
@@ -9,15 +7,14 @@ from keras.models import Model
 from datetime import timedelta, datetime, date
 from sklearn.preprocessing import MinMaxScaler
 import tensorflow.keras.backend as K
-import pandas as pd
 from datetime import date, datetime
 import xgboost as xgb
 import numpy as np
-import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from datetime import datetime, timedelta
 from functions import get_energy
 from functions.reorder_quantiles import reorder_quantiles
+
 
 def energy_baseline(df, date_str=None):
     # %%if date str is none, use today's date

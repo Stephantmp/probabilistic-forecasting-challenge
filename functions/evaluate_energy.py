@@ -4,13 +4,14 @@ import matplotlib.pyplot as plt
 from functions.prepare_data import split_time
 from functions.evaluation import evaluate_horizon
 
-
-
-def evaluate(model1, model2, df, start_date, end_date, horizon_format='days', last_x=5, years=False, months=False, weeks=True):
+def evaluate(*models, df, start_date, end_date, horizon_format='days'):
     '''
-    Evaluate models over a specified range of dates for either DAX or energy forecasts.
+    Evaluate an arbitrary number of models over a specified range of dates for either DAX or energy forecasts.
     '''
     # Ensure df.index is timezone-aware
+    date_range = pd.date_range(start=start_date, end=end_date)
+    wednesdays = [d for d in date_range if d.weekday() == 2]
+
     df.index = pd.to_datetime(df.index)
     if df.index.tz is None:
         df.index = df.index.tz_localize('Europe/Berlin', ambiguous='NaT', nonexistent='shift_forward')
@@ -18,30 +19,26 @@ def evaluate(model1, model2, df, start_date, end_date, horizon_format='days', la
         df.index = df.index.tz_convert('Europe/Berlin')
 
     date_range = pd.date_range(start=start_date, end=end_date, tz='Europe/Berlin')
-    evaluation_model1 = pd.DataFrame()
-    evaluation_model2 = pd.DataFrame()
+    evaluations = []
 
-    for current_date in date_range:
+    for current_date in wednesdays:
+        # Adjust current_date timezone if necessary
+        if df.index.tz is not None:
+            current_date = current_date.tz_localize(df.index.tz)
         # Data for model input: up to current_date
         df_model_input = df[df.index <= current_date]
 
-        # Evaluate model1
-        pred_model1 = model1['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
-        pred_model1 = prepare_predictions(pred_model1, df, horizon_format)
-        evaluation_model1 = pd.concat([evaluation_model1, pred_model1])
+        for model in models:
+            # Evaluate model
+            pred = model['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
+            pred = prepare_predictions(pred, df, horizon_format)
+            pred['model'] = model['name']
+            evaluations.append(pred)
 
-        # Evaluate model2
-        pred_model2 = model2['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
-        pred_model2 = prepare_predictions(pred_model2, df, horizon_format)
-        evaluation_model2 = pd.concat([evaluation_model2, pred_model2])
+    combined_evaluation = pd.concat(evaluations)
+    grouped_scores = process_evaluation_results(combined_evaluation)
 
-    # Process evaluation results
-    evaluation_model1['model'] = model1['name']
-    evaluation_model2['model'] = model2['name']
-    combined_evaluation = process_evaluation_results(evaluation_model1, evaluation_model2)
-
-    return evaluation_model1, evaluation_model2, combined_evaluation
-
+    return evaluations, grouped_scores
 
 def prepare_predictions(pred, df, horizon_format):
     '''
@@ -73,8 +70,6 @@ def prepare_predictions(pred, df, horizon_format):
 
     return merged_df
 
-
-
 def calculate_actual_forecast_date(row, horizon_format):
     '''
     Calculate the actual date of forecast.
@@ -89,12 +84,10 @@ def calculate_actual_forecast_date(row, horizon_format):
         raise ValueError("Invalid horizon format. Please choose 'days' or 'hours'.")
     return forecast_date + horizon
 
-
-def process_evaluation_results(evaluation_model1, evaluation_model2):
+def process_evaluation_results(combined_evaluation):
     '''
-    Process and plot the combined evaluation results.
+    Process and plot the combined evaluation results for an arbitrary number of models.
     '''
-    combined_evaluation = pd.concat([evaluation_model1, evaluation_model2])
     combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
     combined_evaluation = combined_evaluation.sort_values(by='actual_forecast_date')
     combined_evaluation.dropna(subset=['score'], inplace=True)

@@ -1,3 +1,4 @@
+import numpy as np
 def reorder_quantiles(df):
     quantile_cols = ['q0.025', 'q0.25', 'q0.5', 'q0.75', 'q0.975']
     # Sorting quantile values row-wise
