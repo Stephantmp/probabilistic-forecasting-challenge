@@ -26,11 +26,7 @@ def get():
     for i in range(1, 6):
         hist[f'lag_ret{i}'] = compute_return(hist["Close"], h=i)
 
-    # Drop the rows at the end that will not have future returns due to shifting
-    hist = hist.iloc[:-(max(range(1, 6)))]
 
-    # Remove rows with NaN values that result from lagging and shifting
-    hist.dropna(inplace=True)
     return hist
 
 

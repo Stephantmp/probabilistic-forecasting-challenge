@@ -1,57 +1,50 @@
 
 import pandas as pd
 import pytz
-
+import seaborn as sns
+import matplotlib.pyplot as plt
+from datetime import timedelta
 from functions.prepare_data import split_time
 from functions.evaluation import evaluate_horizon
 
 
-def evaluate(model1, model2, df, start_date, end_date, last_x=5, years=False, months=False, weeks=True):
+def evaluate(*models, df, start_date, end_date):
     '''
-    Evaluate DAX models over a specified range of dates.
+    Evaluate an arbitrary number of DAX models over a specified range of dates.
     '''
     date_range = pd.date_range(start=start_date, end=end_date)
-    # Filter date_range to include only Wednesdays
-    wednesdays = [d for d in date_range if d.weekday() == 2]
+    # Filter date_range to include only Thursdays
+    thursdays = [d for d in date_range if d.weekday() == 3]
 
-    evaluation_model1 = pd.DataFrame()
-    evaluation_model2 = pd.DataFrame()
+    evaluations = []
 
-    for current_date in wednesdays:
-        # Adjust current_date timezone if necessary
-        if df.index.tz is not None:
-            current_date = current_date.tz_localize(df.index.tz)
+    for model in models:
+        evaluation_model = pd.DataFrame()
+        for current_date in thursdays:
+            # Adjust current_date timezone if necessary
+            if df.index.tz is not None:
+                current_date = current_date.tz_localize(df.index.tz)
 
-        # Data for model input: up to current_date
-        df_model_input = df[df.index < current_date]
+            # Data for model input: up to current_date
+            df_model_input = df[df.index <= current_date]
 
-        # Evaluate model1
-        pred_model1 = model1['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
-        evaluation_model1 = evaluate_and_append(evaluation_model1, pred_model1, df)
+            # Evaluate current model
+            pred_model = model['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
+            evaluation_model = evaluate_and_append(evaluation_model, pred_model, df)
 
-        # Evaluate model2
-        pred_model2 = model2['function'](df_model_input, date_str=current_date.strftime('%Y-%m-%d'))
-        evaluation_model2 = evaluate_and_append(evaluation_model2, pred_model2, df)
+        evaluation_model['model'] = model['name']
+        evaluations.append(evaluation_model)
 
-
-
-    import seaborn as sns
-    import matplotlib.pyplot as plt
-
-    # Plot data
-
-    # Concatenate the two models' evaluations if needed
-    evaluation_model1['model'] = 'Baseline Model'
-    evaluation_model2['model'] = 'Quantile Regression'
-    combined_evaluation = pd.concat([evaluation_model1, evaluation_model2])
+    # Concatenate all models' evaluations
+    combined_evaluation = pd.concat(evaluations)
 
     # Convert 'actual_forecast_date' to datetime if it's not already
     combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
     combined_evaluation = combined_evaluation.sort_values(by='actual_forecast_date')
     combined_evaluation.dropna(subset=['score'], inplace=True)
-    combined_evaluation['actual_forecast_date'] = pd.to_datetime(combined_evaluation['actual_forecast_date'])
     combined_evaluation['score'] = combined_evaluation['score'].astype(float)
 
+    # Plotting
     plt.figure(figsize=(12, 6))
     sns.lineplot(data=combined_evaluation, x='actual_forecast_date', y='score', hue='model')
     plt.title('Model Score Over Time')
@@ -59,13 +52,14 @@ def evaluate(model1, model2, df, start_date, end_date, last_x=5, years=False, mo
     plt.ylabel('Score')
     plt.xticks(rotation=45)  # Optional: Rotate x-axis labels for better readability
     plt.show()
+
     # Aggregating scores by model and horizon
     grouped_scores = combined_evaluation.groupby(['model', 'horizon'])['score'].agg(['mean', 'median', 'std'])
-    grouped_scores
-    return evaluation_model1, evaluation_model2
+    print(grouped_scores)
+
+    return evaluations, grouped_scores  # Returns list of DataFrames, each corresponding to a model's evaluation
 
 
-from datetime import timedelta
 def add_business_days(from_date, add_days):
     current_date = from_date
     while add_days > 0:
@@ -99,10 +93,10 @@ def evaluate_and_append(evaluation_df, pred, df):
     # Loop to evaluate predictions against actual observed values
     for index, row in merged_df.iterrows():
         horizon_days = int(row['horizon'].split()[0])
-        ret_str = f'future_ret{horizon_days}'
+        ret_str = f'lag_ret{horizon_days}'
         observation = row[ret_str]
         quantile_preds = row[['q0.025', 'q0.25', 'q0.5', 'q0.75', 'q0.975']]
-        score = evaluate_horizon(quantile_preds.values, observation)
+        score = evaluate_horizon(-quantile_preds.values, observation)
         merged_df.at[index, 'score'] = score
 
     evaluation_df = pd.concat([evaluation_df, merged_df])
