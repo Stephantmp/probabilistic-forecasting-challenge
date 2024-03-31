@@ -7,7 +7,7 @@ from tqdm import tqdm
 
 
 # Function returns the data from Yahoo Finance and compute the returns
-def get():
+def get(last_years=3):
     def compute_return(y, r_type="log", h=1):
         if r_type == "log":
             ret = (np.log(y) - np.log(y.shift(h))) * 100
@@ -26,9 +26,11 @@ def get():
     for i in range(1, 6):
         hist[f'lag_ret{i}'] = compute_return(hist["Close"], h=i)
 
-
+    # Only consider last 3 years of data
+    current_year= pd.to_datetime('now').year
+    start_year = current_year - last_years
+    hist = hist[hist.index.year >= start_year]
     return hist
 
 
-# Call the function and store the data
-dax_data = get()
+

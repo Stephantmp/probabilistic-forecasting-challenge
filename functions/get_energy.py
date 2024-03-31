@@ -1,8 +1,11 @@
 import pandas as pd
 from tqdm import tqdm
 from datetime import datetime
+import holidays
 
-def get():
+
+def get(last_years=3):
+
 
     def get_energy_data():
         import requests
@@ -40,4 +43,37 @@ def get():
     df = df.rename(columns={"Netzlast_Gesamt": "gesamt"})
     df['gesamt'] = df['gesamt'] / 1000
     df["weekday"] = df.index.weekday  # Monday=0, Sunday=6
-    return df
+
+    def get_energy_data_excluding_holidays_and_old_data(df, last_years=3):
+        # Determine the current year and calculate the start year for the data inclusion
+        current_year = pd.to_datetime('now').year
+        start_year = current_year - last_years
+
+        # Generate the cutoff date for data inclusion
+        cutoff_date = pd.Timestamp(year=start_year, month=1, day=1)
+
+        # Generate German holidays for the specified years
+        de_holidays = holidays.DE(years=range(start_year, current_year + 1))
+
+        # Convert holiday dates to string format for filtering
+        holiday_strs = {date.strftime('%Y-%m-%d') for date in de_holidays.keys()}
+        print(holiday_strs)
+        # Manually add the Christmas to Heilige Drei Könige period for each year
+        for year in range(start_year, current_year + 1):
+            christmas_period = pd.date_range(start=f"{year}-12-25", end=f"{year + 1}-01-06")
+            holiday_strs.update(set(christmas_period.strftime('%Y-%m-%d')))
+
+        # Ensure the DataFrame's index is in datetime format
+        if not pd.api.types.is_datetime64_any_dtype(df.index):
+            df.index = pd.to_datetime(df.index)
+
+        # First, filter out the dates older than the last_years threshold
+        df_filtered = df[df.index >= cutoff_date]
+
+        # Next, filter out the holiday dates
+        df_filtered = df_filtered[~df_filtered.index.strftime('%Y-%m-%d').isin(holiday_strs)]
+
+        return df_filtered
+    df_filtered=get_energy_data_excluding_holidays_and_old_data(df,last_years)
+    return df_filtered
+

@@ -307,13 +307,13 @@ def energy_quantile_regression(df,date_str=None):
     #%%
     forecast_df2 = forecast_df.copy()
     #%%
-    print(forecast_df)
+
 
     # Make predictions for each quantile
     for quantile, model in quantile_models.items():
         forecast_var = model.predict(forecast_df)
         forecast_df2[f'prediction_q{quantile}'] = forecast_var
-    print(forecast_df2)
+
     '''
     # Formatting the output
     df_sub = pd.DataFrame()

@@ -97,10 +97,9 @@ def predict_for_date(df, forecast_date, features, scaler_X, quantile_models):
     and predict future returns using quantile models.
     """
     forecast_date = pd.to_datetime(forecast_date).tz_localize('Europe/Berlin')
-
     # Find the most recent date in the DataFrame before the forecast_date
-    most_recent_date = df.index[df.index < forecast_date].max()
-
+    most_recent_date = df.index[df.index <= forecast_date].max()
+    print(f"Most recent date: {most_recent_date}")
     # Ensure there is data available up to the most recent date
     if pd.isnull(most_recent_date):
         raise ValueError(f"No historical data available before forecast_date: {forecast_date}")
