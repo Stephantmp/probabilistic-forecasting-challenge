@@ -213,10 +213,10 @@ def energy_LSTM(input_data, date_str=None):
         'target': ['energy'] * len(original_scale_predictions),
         'horizon': [f'{h} hour' for h in horizons for _ in range(len(original_scale_predictions)//len(horizons))]
     })
-    final_df = pd.concat([df_static, df_predictions], axis=1)
+    df_sub = pd.concat([df_static, df_predictions], axis=1)
     model.reset_states()
-    final_df=reorder_quantiles(final_df)
-    return final_df
+    df_sub=reorder_quantiles(df_sub)
+    return df_sub
 
 
 def energy_quantile_regression(df,date_str=None):
@@ -525,11 +525,11 @@ def energy_XGBoost(input_data=None, date_str=None):
         df_predictions = pd.DataFrame(predictions)
         # Correctly format column names
         df_predictions.columns = [f'q{q}' for q in quantiles]
-        final_df = pd.concat([df_static.reset_index(drop=True), df_predictions], axis=1)
+        df_sub = pd.concat([df_static.reset_index(drop=True), df_predictions], axis=1)
     else:
         print("Error: No valid predictions were generated.")
-        final_df = pd.DataFrame()
-    final_df=reorder_quantiles(final_df)
-    return final_df
+        df_sub = pd.DataFrame()
+    df_sub=reorder_quantiles(df_sub)
+    return df_sub
 
 
